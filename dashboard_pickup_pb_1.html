@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Power Bank</title>
+<style>
+:root {
+  --bg: #0f1117; --card: #1a1d27; --border: #2a2d3a;
+  --text: #e2e8f0; --muted: #64748b;
+  --blue: #3b82f6; --green: #22c55e; --yellow: #f59e0b;
+  --red: #ef4444; --purple: #a855f7;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Segoe UI',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+.header { background:var(--card); border-bottom:1px solid var(--border); padding:1rem 1.5rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem; }
+.header h1 { font-size:1.2rem; font-weight:700; color:#fff; }
+.header p  { font-size:12px; color:var(--muted); margin-top:2px; }
+.hright { display:flex; align-items:center; gap:10px; }
+.dot { width:8px; height:8px; border-radius:50%; background:var(--green); animation:pulse 2s infinite; display:inline-block; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.rtime { font-size:11px; color:var(--muted); }
+.btnr { background:var(--border); border:1px solid #3a3d4a; color:var(--text); padding:6px 14px; border-radius:6px; cursor:pointer; font-size:12px; }
+.btnr:hover { background:#2a2d3a; }
+
+.tabs { display:flex; background:var(--card); border-bottom:1px solid var(--border); padding:0 1.5rem; }
+.tab { padding:12px 22px; font-size:13px; font-weight:500; cursor:pointer; border-bottom:2px solid transparent; color:var(--muted); transition:all 0.2s; }
+.tab:hover { color:var(--text); }
+.tab.ab { border-bottom-color:var(--blue);   color:var(--blue); }
+.tab.ay { border-bottom-color:var(--yellow); color:var(--yellow); }
+
+.main { padding:1.5rem; }
+
+.summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1rem; margin-bottom:1.5rem; }
+.scard { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:1rem 1.2rem; }
+.scard .lbl { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px; }
+.scard .val { font-size:2rem; font-weight:700; line-height:1; }
+.scard .sub { font-size:11px; color:var(--muted); margin-top:4px; }
+
+.filters { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:1.2rem; }
+.finput { background:var(--card); border:1px solid var(--border); color:var(--text); padding:7px 12px; border-radius:6px; font-size:12px; outline:none; min-width:200px; }
+.finput:focus { border-color:var(--blue); }
+.fsel { background:var(--card); border:1px solid var(--border); color:var(--text); padding:7px 12px; border-radius:6px; font-size:12px; outline:none; cursor:pointer; }
+.cnt { background:var(--border); color:var(--muted); font-size:11px; padding:4px 10px; border-radius:20px; margin-left:auto; }
+
+.tbl-wrap { background:var(--card); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+.tbl-scr  { overflow-x:auto; max-height:65vh; overflow-y:auto; }
+table { width:100%; border-collapse:collapse; font-size:12px; }
+thead { position:sticky; top:0; z-index:10; background:#12151f; }
+th { padding:10px 14px; text-align:left; font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; white-space:nowrap; border-bottom:1px solid var(--border); }
+tbody tr { border-bottom:1px solid var(--border); }
+tbody tr:hover { background:rgba(255,255,255,0.03); }
+tbody tr:last-child { border-bottom:none; }
+td { padding:10px 14px; white-space:nowrap; }
+td.nc { white-space:normal; max-width:240px; line-height:1.4; }
+
+.badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600; }
+.b-on  { background:rgba(34,197,94,0.15);   color:var(--green); }
+.b-off { background:rgba(239,68,68,0.15);   color:var(--red); }
+.b-typ { background:rgba(168,85,247,0.12);  color:var(--purple); }
+.b-hi  { background:rgba(239,68,68,0.2);    color:var(--red);    font-size:13px; padding:3px 10px; }
+.b-md  { background:rgba(245,158,11,0.2);   color:var(--yellow); font-size:13px; padding:3px 10px; }
+.b-lo  { background:rgba(59,130,246,0.15);  color:var(--blue);   font-size:13px; padding:3px 10px; }
+.b-z   { background:rgba(100,116,139,0.15); color:var(--muted);  font-size:13px; padding:3px 10px; }
+
+.pw { display:flex; align-items:center; gap:8px; }
+.pb { flex:1; height:6px; background:var(--border); border-radius:3px; min-width:60px; overflow:hidden; }
+.pf { height:100%; border-radius:3px; }
+.pt { font-size:11px; min-width:32px; text-align:right; }
+
+.pwa-link { color:var(--blue); text-decoration:none; font-size:11px; }
+.pwa-link:hover { text-decoration:underline; }
+.loading { display:flex; align-items:center; justify-content:center; padding:4rem; gap:1rem; flex-direction:column; }
+.spinner { width:36px; height:36px; border:3px solid var(--border); border-radius:50%; animation:spin 0.8s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.empty  { text-align:center; padding:3rem; color:var(--muted); }
+.footer { font-size:11px; color:var(--muted); margin-top:1rem; text-align:right; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>⚡ Dashboard Power Bank</h1>
+    <p>Monitoring Replenish & Pickup PB — Auto refresh setiap 5 menit</p>
+  </div>
+  <div class="hright">
+    <span class="dot"></span>
+    <span class="rtime" id="rtime">Memuat...</span>
+    <button class="btnr" onclick="loadAll()">⟳ Refresh</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab ab" id="tab-p" onclick="switchTab('p')">🔵 Pickup PB</div>
+  <div class="tab"    id="tab-r" onclick="switchTab('r')">🟡 Replenish PB</div>
+</div>
+
+<div class="main">
+
+  <!-- PICKUP -->
+  <div id="sec-p">
+    <div class="summary" id="sum-p"></div>
+    <div class="filters">
+      <input class="finput" id="srch-p" placeholder="🔍 Cari terminal / area..." oninput="rP()">
+      <select class="fsel" id="area-p" onchange="rP()"><option value="">Semua Area</option></select>
+      <select class="fsel" id="conn-p" onchange="rP()">
+        <option value="">Semua Koneksi</option>
+        <option value="on">Online</option>
+        <option value="off">Offline</option>
+      </select>
+      <select class="fsel" id="sort-p" onchange="rP()">
+        <option value="pd">Pickup ↓ Terbesar</option>
+        <option value="pa">Pickup ↑ Terkecil</option>
+        <option value="cd">Jumlah PB ↓</option>
+        <option value="ca">Jumlah PB ↑</option>
+      </select>
+      <span class="cnt" id="cnt-p">0 terminal</span>
+    </div>
+    <div class="tbl-wrap"><div class="tbl-scr">
+      <div class="loading" id="ld-p"><div class="spinner" style="border-top-color:var(--blue)"></div><span style="color:var(--muted);font-size:13px">Memuat data Pickup PB...</span></div>
+      <table id="tbl-p" style="display:none">
+        <thead><tr>
+          <th>#</th><th>Terminal</th><th>Area</th><th>Type</th><th>Koneksi</th>
+          <th>Jumlah Slot</th><th>PB%</th>
+          <th style="color:var(--purple)">Jumlah PB</th>
+          <th>Ideal 50%</th><th>PB Lock</th><th>Slot Kosong</th>
+          <th style="color:var(--blue)">⬆ Pickup</th><th>PWA</th>
+        </tr></thead>
+        <tbody id="bod-p"></tbody>
+      </table>
+      <div class="empty" id="emp-p" style="display:none">Tidak ada data</div>
+    </div></div>
+    <p class="footer" id="ftr-p"></p>
+  </div>
+
+  <!-- REPLENISH -->
+  <div id="sec-r" style="display:none">
+    <div class="summary" id="sum-r"></div>
+    <div class="filters">
+      <input class="finput" id="srch-r" placeholder="🔍 Cari terminal / area..." oninput="rR()">
+      <select class="fsel" id="area-r" onchange="rR()"><option value="">Semua Area</option></select>
+      <select class="fsel" id="conn-r" onchange="rR()">
+        <option value="">Semua Koneksi</option>
+        <option value="on">Online</option>
+        <option value="off">Offline</option>
+      </select>
+      <select class="fsel" id="sort-r" onchange="rR()">
+        <option value="rd">Replenish ↓ Terbesar</option>
+        <option value="ra">Replenish ↑ Terkecil</option>
+        <option value="kd">Ready to Rent ↓</option>
+        <option value="ka">Ready to Rent ↑</option>
+      </select>
+      <span class="cnt" id="cnt-r">0 terminal</span>
+    </div>
+    <div class="tbl-wrap"><div class="tbl-scr">
+      <div class="loading" id="ld-r"><div class="spinner" style="border-top-color:var(--yellow)"></div><span style="color:var(--muted);font-size:13px">Memuat data Replenish PB...</span></div>
+      <table id="tbl-r" style="display:none">
+        <thead><tr>
+          <th>#</th><th>Terminal</th><th>Area</th><th>Type</th><th>Koneksi</th>
+          <th>Jumlah Slot</th><th>PB%</th>
+          <th style="color:var(--purple)">Ready to Rent</th>
+          <th>PB Charging</th><th>Slot Kosong</th><th>PB Lock</th>
+          <th style="color:var(--yellow)">⬇ Replenish</th><th>PWA</th>
+        </tr></thead>
+        <tbody id="bod-r"></tbody>
+      </table>
+      <div class="empty" id="emp-r" style="display:none">Tidak ada data</div>
+    </div></div>
+    <p class="footer" id="ftr-r"></p>
+  </div>
+
+</div>
+
+<script>
+const URL_P = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTMWv2mD7Ji9EY5gAuC0tRquUY7qQGBT-rI4IpsU6JfrM-7XrLOom3Q4GTpt1dWYbEYEH146BWpPfxD/pub?gid=1421174182&single=true&output=csv';
+const URL_R = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTMWv2mD7Ji9EY5gAuC0tRquUY7qQGBT-rI4IpsU6JfrM-7XrLOom3Q4GTpt1dWYbEYEH146BWpPfxD/pub?gid=2147311730&single=true&output=csv';
+
+let DP = [], DR = [];
+
+// CSV parser yang handle quoted fields dengan benar
+function parseCSV(text) {
+  return text.trim().split('\n').map(line => {
+    const cols = []; let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else { cur += c; }
+    }
+    cols.push(cur.trim());
+    return cols;
+  });
+}
+
+// Validasi baris: harus terminal ID ldx_ dan slots > 0
+function validRow(r) {
+  return r[0] && r[0].trim().startsWith('ldx') && parseInt(r[4]) > 0;
+}
+
+async function loadAll() {
+  document.getElementById('rtime').textContent = 'Memuat...';
+  try {
+    const [tP, tR] = await Promise.all([
+      fetch(URL_P + '&t=' + Date.now()).then(r => r.text()),
+      fetch(URL_R + '&t=' + Date.now()).then(r => r.text())
+    ]);
+
+    const rowsP = parseCSV(tP);
+    const rowsR = parseCSV(tR);
+
+    // PICKUP — index by column:
+    // A(0)=TerminalID B(1)=Name C(2)=type D(3)=Conn E(4)=Slots F(5)=PB%
+    // G(6)=Area J(9)=EmptySlot K(10)=PBLock L(11)=currentPB M(12)=Ideal50% N(13)=PickupPB O(14)=PWA
+    DP = rowsP.slice(1).filter(validRow).map(r => ({
+      id:    r[0].trim(),
+      name:  r[1].trim(),
+      type:  r[2].trim(),
+      conn:  r[3].trim().toUpperCase(),
+      slots: parseInt(r[4]),
+      pct:   parseInt(r[5]),
+      area:  r[6].trim(),
+      empty: parseInt(r[9])  || 0,
+      lock:  parseInt(r[10]) || 0,
+      curPB: parseInt(r[11]) || 0,   // col L = currentPB
+      ideal: parseInt(r[12]) || 0,   // col M = Ideal50%
+      pick:  parseInt(r[13]) || 0,   // col N = PickupPB (=L-M dari GSheet)
+      pwa:   (r[14] || '').trim()
+    }));
+
+    // REPLENISH — index by column:
+    // A(0)=TerminalID B(1)=Name C(2)=type D(3)=Conn E(4)=Slots F(5)=PB%
+    // G(6)=Area J(9)=PBCharging K(10)=ReadyToRent L(11)=EmptySlot M(12)=PBLock N(13)=Replenish O(14)=PWA
+    // Formula: N = E/2 - K
+    DR = rowsR.slice(1).filter(validRow).map(r => ({
+      id:     r[0].trim(),
+      name:   r[1].trim(),
+      type:   r[2].trim(),
+      conn:   r[3].trim().toUpperCase(),
+      slots:  parseInt(r[4]),
+      pct:    parseInt(r[5]),
+      area:   r[6].trim(),
+      charge: parseInt(r[9])  || 0,  // col J = PB Charging
+      ready:  parseInt(r[10]) || 0,  // col K = Ready to Rent
+      empty:  parseInt(r[11]) || 0,  // col L = Empty Slot
+      lock:   parseInt(r[12]) || 0,  // col M = PB Lock
+      rep:    parseInt(r[13]) || 0,  // col N = Replenish (=E/2-K dari GSheet)
+      pwa:    (r[14] || '').trim()
+    }));
+
+    fillArea('area-p', DP);
+    fillArea('area-r', DR);
+    rP(); rR();
+    document.getElementById('rtime').textContent = 'Update: ' + new Date().toLocaleTimeString('id-ID');
+  } catch(e) {
+    document.getElementById('rtime').textContent = '⚠ Gagal memuat';
+    console.error(e);
+  }
+}
+
+function fillArea(id, data) {
+  const sel = document.getElementById(id), cur = sel.value;
+  const areas = [...new Set(data.map(r => r.area).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">Semua Area</option>';
+  areas.forEach(a => {
+    const o = document.createElement('option');
+    o.value = a; o.textContent = a;
+    if (a === cur) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+function switchTab(t) {
+  document.getElementById('sec-p').style.display = t === 'p' ? 'block' : 'none';
+  document.getElementById('sec-r').style.display = t === 'r' ? 'block' : 'none';
+  document.getElementById('tab-p').className = 'tab' + (t === 'p' ? ' ab' : '');
+  document.getElementById('tab-r').className = 'tab' + (t === 'r' ? ' ay' : '');
+}
+
+function col(pct) { return pct >= 70 ? '#22c55e' : pct >= 40 ? '#f59e0b' : '#ef4444'; }
+function bc(n)    { return n === 0 ? 'b-z' : n >= 5 ? 'b-hi' : n >= 3 ? 'b-md' : 'b-lo'; }
+
+function filt(data, si, ai, ci) {
+  const s = document.getElementById(si).value.toLowerCase();
+  const a = document.getElementById(ai).value;
+  const c = document.getElementById(ci).value;
+  return data.filter(r => {
+    const ms = !s || r.name.toLowerCase().includes(s) || r.area.toLowerCase().includes(s) || r.id.toLowerCase().includes(s);
+    const ma = !a || r.area === a;
+    const mc = !c || (c === 'on' ? r.conn === 'TRUE' : r.conn !== 'TRUE');
+    return ms && ma && mc;
+  });
+}
+
+function renderSummary(id, items) {
+  document.getElementById(id).innerHTML = items.map(x =>
+    `<div class="scard"><div class="lbl">${x.l}</div><div class="val" style="color:${x.c}">${x.v}</div><div class="sub">${x.s}</div></div>`
+  ).join('');
+}
+
+function rP() {
+  let d = filt(DP, 'srch-p', 'area-p', 'conn-p');
+  const sv = document.getElementById('sort-p').value;
+  d.sort((a,b) => sv==='pd'?b.pick-a.pick : sv==='pa'?a.pick-b.pick : sv==='cd'?b.curPB-a.curPB : a.curPB-b.curPB);
+
+  const tot = d.reduce((s,r) => s+r.pick, 0);
+  const on  = d.filter(r => r.conn === 'TRUE').length;
+  const hi  = d.filter(r => r.pick >= 5).length;
+  const avg = d.length ? Math.round(d.reduce((s,r) => s+r.pct, 0) / d.length) : 0;
+
+  renderSummary('sum-p', [
+    {l:'Total Terminal',  v:d.length,       c:'var(--blue)',   s:`dari ${DP.length} total`},
+    {l:'Total Pickup PB', v:tot,            c:'var(--blue)',   s:'unit harus diambil'},
+    {l:'Prioritas Tinggi',v:hi,             c:'var(--red)',    s:'pickup ≥ 5 PB'},
+    {l:'Online',          v:on,             c:'var(--green)',  s:`${d.length-on} offline`},
+    {l:'Rata-rata PB%',   v:avg+'%',        c:'var(--purple)', s:'current fill rate'},
+  ]);
+
+  document.getElementById('ld-p').style.display = 'none';
+  document.getElementById('cnt-p').textContent = d.length + ' terminal';
+
+  if (!d.length) {
+    document.getElementById('tbl-p').style.display = 'none';
+    document.getElementById('emp-p').style.display = 'block';
+    return;
+  }
+  document.getElementById('tbl-p').style.display = 'table';
+  document.getElementById('emp-p').style.display = 'none';
+  document.getElementById('bod-p').innerHTML = d.map((r,i) => {
+    const c = col(r.pct);
+    return `<tr>
+      <td style="color:var(--muted)">${i+1}</td>
+      <td class="nc"><div style="font-weight:500">${r.name||'-'}</div><div style="font-size:10px;color:var(--muted)">${r.id}</div></td>
+      <td style="color:var(--muted);font-size:11px">${r.area||'-'}</td>
+      <td><span class="badge b-typ">${r.type||'-'}</span></td>
+      <td><span class="badge ${r.conn==='TRUE'?'b-on':'b-off'}">${r.conn==='TRUE'?'Online':'Offline'}</span></td>
+      <td style="text-align:center">${r.slots}</td>
+      <td><div class="pw"><div class="pb"><div class="pf" style="width:${r.pct}%;background:${c}"></div></div><span class="pt" style="color:${c}">${r.pct}%</span></div></td>
+      <td style="text-align:center;color:var(--purple);font-weight:600">${r.curPB}</td>
+      <td style="text-align:center;color:var(--muted)">${r.ideal}</td>
+      <td style="text-align:center;color:var(--red)">${r.lock}</td>
+      <td style="text-align:center;color:var(--muted)">${r.empty}</td>
+      <td style="text-align:center"><span class="badge ${bc(r.pick)}">${r.pick}</span></td>
+      <td><a href="${r.pwa||'#'}" target="_blank" class="pwa-link">Buka ↗</a></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('ftr-p').textContent = 'Data terakhir diperbarui: ' + new Date().toLocaleString('id-ID');
+}
+
+function rR() {
+  let d = filt(DR, 'srch-r', 'area-r', 'conn-r');
+  const sv = document.getElementById('sort-r').value;
+  d.sort((a,b) => sv==='rd'?b.rep-a.rep : sv==='ra'?a.rep-b.rep : sv==='kd'?b.ready-a.ready : a.ready-b.ready);
+
+  const tot = d.reduce((s,r) => s+r.rep, 0);
+  const on  = d.filter(r => r.conn === 'TRUE').length;
+  const hi  = d.filter(r => r.rep >= 5).length;
+  const avg = d.length ? Math.round(d.reduce((s,r) => s+r.pct, 0) / d.length) : 0;
+
+  renderSummary('sum-r', [
+    {l:'Total Terminal',   v:d.length,  c:'var(--yellow)', s:`dari ${DR.length} total`},
+    {l:'Total Replenish',  v:tot,       c:'var(--yellow)', s:'unit harus diisi'},
+    {l:'Prioritas Tinggi', v:hi,        c:'var(--red)',    s:'replenish ≥ 5 PB'},
+    {l:'Online',           v:on,        c:'var(--green)',  s:`${d.length-on} offline`},
+    {l:'Rata-rata PB%',    v:avg+'%',   c:'var(--purple)', s:'current fill rate'},
+  ]);
+
+  document.getElementById('ld-r').style.display = 'none';
+  document.getElementById('cnt-r').textContent = d.length + ' terminal';
+
+  if (!d.length) {
+    document.getElementById('tbl-r').style.display = 'none';
+    document.getElementById('emp-r').style.display = 'block';
+    return;
+  }
+  document.getElementById('tbl-r').style.display = 'table';
+  document.getElementById('emp-r').style.display = 'none';
+  document.getElementById('bod-r').innerHTML = d.map((r,i) => {
+    const c = col(r.pct);
+    return `<tr>
+      <td style="color:var(--muted)">${i+1}</td>
+      <td class="nc"><div style="font-weight:500">${r.name||'-'}</div><div style="font-size:10px;color:var(--muted)">${r.id}</div></td>
+      <td style="color:var(--muted);font-size:11px">${r.area||'-'}</td>
+      <td><span class="badge b-typ">${r.type||'-'}</span></td>
+      <td><span class="badge ${r.conn==='TRUE'?'b-on':'b-off'}">${r.conn==='TRUE'?'Online':'Offline'}</span></td>
+      <td style="text-align:center">${r.slots}</td>
+      <td><div class="pw"><div class="pb"><div class="pf" style="width:${r.pct}%;background:${c}"></div></div><span class="pt" style="color:${c}">${r.pct}%</span></div></td>
+      <td style="text-align:center;color:var(--purple);font-weight:600">${r.ready}</td>
+      <td style="text-align:center;color:var(--muted)">${r.charge}</td>
+      <td style="text-align:center;color:var(--muted)">${r.empty}</td>
+      <td style="text-align:center;color:var(--red)">${r.lock}</td>
+      <td style="text-align:center"><span class="badge ${bc(r.rep)}">${r.rep}</span></td>
+      <td><a href="${r.pwa||'#'}" target="_blank" class="pwa-link">Buka ↗</a></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('ftr-r').textContent = 'Data terakhir diperbarui: ' + new Date().toLocaleString('id-ID');
+}
+
+loadAll();
+setInterval(loadAll, 5 * 60 * 1000);
+</script>
+</body>
+</html>
